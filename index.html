@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f2f5" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0f19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="description" content="Hold to record, let go to hear it backwards." />
+  <title>There and Back Again</title>
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <h2>There and Back Again</h2>
+  <p id="gateText">Hold the button and make a sound. Let go and hear it backwards.</p>
+  <button class="btn-enable" id="btnEnable">Tap to start</button>
+  <p class="gate-note">Needs your microphone. Nothing is uploaded.</p>
+</div>
+
+<header class="header">
+  <h1>There and Back Again</h1>
+  <p class="sub">Record &middot; Reverse &middot; Listen</p>
+</header>
+
+<main class="main">
+  <div class="meter-wrap">
+    <div class="meter"><div class="meter-bar" id="meterBar"></div></div>
+  </div>
+
+  <div class="tracks-row" role="group" aria-label="Tracks">
+    <span class="tracks-label">Tracks</span>
+    <button class="track-pill selected" data-track="0" aria-label="Track 1">1<span class="clear-x" aria-label="Clear track 1">&times;</span></button>
+    <button class="track-pill" data-track="1" aria-label="Track 2">2<span class="clear-x" aria-label="Clear track 2">&times;</span></button>
+    <button class="track-pill" data-track="2" aria-label="Track 3">3<span class="clear-x" aria-label="Clear track 3">&times;</span></button>
+  </div>
+
+  <div class="waveform-wrap" id="waveformWrap">
+    <canvas id="waveform"></canvas>
+    <div class="playhead" id="playhead"></div>
+    <span class="waveform-label" id="waveLabel">Empty</span>
+  </div>
+
+  <div class="controls-row">
+    <button class="side-btn" id="btnLoop" aria-label="Loop" aria-pressed="false" title="Loop">
+      <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+    </button>
+    <button class="btn-record" id="btnRecord" aria-label="Hold to record">
+      <svg class="btn-icon" id="btnIcon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="36" /></svg>
+    </button>
+    <button class="side-btn" id="btnReplay" aria-label="Replay" title="Replay">
+      <svg viewBox="0 0 24 24" id="replayIcon"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+  </div>
+  <div class="btn-label" id="btnLabel">Hold to record</div>
+  <div class="status" id="status">&nbsp;</div>
+</main>
+
+<section class="settings">
+  <button class="settings-toggle" id="settingsToggle" aria-expanded="false" aria-controls="settingsBody">Settings <span class="arrow">&#9662;</span></button>
+  <div class="settings-body" id="settingsBody" hidden>
+    <div class="field">
+      <span class="label">Record button</span>
+      <div class="seg" id="modeSeg" role="radiogroup" aria-label="Record button">
+        <button class="seg-btn active" data-mode="hold" role="radio" aria-checked="true">Hold</button>
+        <button class="seg-btn" data-mode="tap" role="radio" aria-checked="false">Tap on / off</button>
+      </div>
+      <p class="note" id="modeNote">Hold to record, let go to hear it reversed. A quick tap replays or stops.</p>
+    </div>
+    <label class="field">
+      <span class="label">Volume <span class="val" id="volumeVal">100%</span></span>
+      <input type="range" id="volume" min="0" max="3" step="0.05" value="1" />
+    </label>
+    <label class="check-row">
+      <input type="checkbox" id="maximize" checked />
+      <span>Auto-maximize each take (louder, never clips)</span>
+    </label>
+    <label class="field">
+      <span class="label">Speed <span class="val" id="rateVal">1.00×</span></span>
+      <input type="range" id="rate" min="0.25" max="2" step="0.05" value="1" />
+    </label>
+    <label class="field">
+      <span class="label">Fade in <span class="val" id="fadeInVal">0.15s</span></span>
+      <input type="range" id="fadeIn" min="0" max="3" step="0.05" value="0.15" />
+    </label>
+    <label class="field">
+      <span class="label">Fade out <span class="val" id="fadeOutVal">0.10s</span></span>
+      <input type="range" id="fadeOut" min="0" max="3" step="0.05" value="0.1" />
+    </label>
+    <label class="field">
+      <span class="label">Microphone</span>
+      <select id="inputSelect"><option value="">Default</option></select>
+    </label>
+    <label class="field" id="outputField" hidden>
+      <span class="label">Output</span>
+      <select id="outputSelect"><option value="">Default</option></select>
+    </label>
+    <div class="info-row" id="infoRow"></div>
+  </div>
+</section>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
