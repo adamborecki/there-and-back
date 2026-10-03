@@ -181,6 +181,7 @@ button { font-family: inherit; color: inherit; }
 .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
 .seg-btn.active { background: var(--wave-idle); color: #fff; font-weight: 600; }
 .info-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.build { font-size: 0.7rem; color: var(--muted); opacity: 0.8; font-variant-numeric: tabular-nums; }
 .info-pill { font-size: 0.72rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
 
 /* ---------- start gate ---------- */

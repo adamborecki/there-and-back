@@ -639,6 +639,10 @@ function loadSettings() {
 
 /* ---------------- go ---------------- */
 
+// Build label is filled in at deploy (tools/stamp-build.sh).
+const buildEl = document.getElementById('build');
+if (buildEl && buildEl.textContent.includes('__BUILD__')) buildEl.textContent = 'build: local';
+
 loadSettings();
 renderAll();
 restoreTracks();
