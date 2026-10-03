@@ -16,6 +16,7 @@
 import { AudioEngine } from './audio.js';
 import { saveTrack, loadTracks } from './store.js';
 import { wavFromBuffer, saveFiles, stamp } from './wav.js';
+import { ask } from './ask.js';
 
 const TAP_SECONDS = 0.3;     // a hold shorter than this counts as a tap
 const MAX_SECONDS = 120;     // recording auto-stops here
@@ -31,7 +32,7 @@ const els = {
   waveLabel: $('waveLabel'), playhead: $('playhead'),
   btnRecord: $('btnRecord'), btnIcon: $('btnIcon'), btnLabel: $('btnLabel'),
   btnLoop: $('btnLoop'), btnReplay: $('btnReplay'), replayIcon: $('replayIcon'),
-  status: $('status'), infoRow: $('infoRow'), btnSave: $('btnSave'),
+  status: $('status'), infoRow: $('infoRow'), btnSave: $('btnSave'), btnUndo: $('btnUndo'),
   settingsToggle: $('settingsToggle'), settingsBody: $('settingsBody'),
   volume: $('volume'), volumeVal: $('volumeVal'), maximize: $('maximize'),
   rate: $('rate'), rateVal: $('rateVal'),
@@ -208,12 +209,50 @@ async function finishRecording() {
     return;
   }
   const { buffer, gain } = audio.makeReversed(samples, { maximize: els.maximize.checked });
+  const replaced = state.tracks[state.active];
   state.tracks[state.active] = buffer;
-  saveTrack(state.active, buffer); // keep it across reloads
+  keep(state.active, buffer);
   const dB = 20 * Math.log10(gain);
   setStatus(`Recorded ${buffer.duration.toFixed(1)}s${gain > 1.01 ? ` · boosted +${dB.toFixed(0)} dB` : ''}`);
+  // Recording over a take replaces it: offer Undo rather than a confirm, so
+  // hold-to-record stays instant.
+  if (replaced) offerUndo(state.active, replaced);
   playAll();
 }
+
+// Store a track on the device; say so if that fails (storage full/blocked).
+async function keep(index, buffer) {
+  const ok = await saveTrack(index, buffer);
+  if (buffer && ok === null) {
+    setStatus(`⚠ Couldn't keep track ${index + 1} on this device. Use Save to keep it.`);
+  }
+}
+
+/* ---------------- undo (replaced take) ---------------- */
+
+let undo = null; // { index, buffer, timer }
+function offerUndo(index, buffer) {
+  clearUndo();
+  undo = { index, buffer, timer: setTimeout(clearUndo, 12000) };
+  els.btnUndo.textContent = `Undo · bring back the old track ${index + 1}`;
+  els.btnUndo.hidden = false;
+}
+function clearUndo() {
+  if (undo) clearTimeout(undo.timer);
+  undo = null;
+  els.btnUndo.hidden = true;
+}
+els.btnUndo.addEventListener('click', () => {
+  if (!undo || state.phase === 'recording' || state.phase === 'processing') return;
+  const { index, buffer } = undo;
+  clearUndo();
+  stopPlayback(true);
+  state.tracks[index] = buffer;
+  state.active = index;
+  keep(index, buffer);
+  renderAll();
+  setStatus(`Track ${index + 1} is back.`);
+});
 
 /* ---------------- playback ---------------- */
 
@@ -269,27 +308,48 @@ els.btnLoop.addEventListener('click', () => {
 els.pills.forEach((pill, i) => {
   pill.addEventListener('click', (e) => {
     if (state.phase === 'recording' || state.phase === 'processing') return;
-    if (e.target.classList.contains('clear-x')) {
-      state.tracks[i] = null;
-      saveTrack(i, null);
-      if (state.phase === 'playing') stopPlayback();
-    }
     state.active = i;
     renderAll();
+    if (e.target.classList.contains('clear-x')) clearTrack(i);
   });
 });
+
+// The × deletes a take from the device, so ask first (it's a small target).
+async function clearTrack(i) {
+  const buf = state.tracks[i];
+  if (!buf) return;
+  const choice = await ask({
+    title: `Delete track ${i + 1}?`,
+    body: `This deletes the ${buf.duration.toFixed(1)}s take from this device. It can't be undone.`,
+    buttons: [
+      { label: 'Save it first', value: 'save' },
+      { label: 'Delete', value: 'delete', kind: 'danger', confirm: true },
+      { label: 'Cancel', value: null },
+    ],
+  });
+  if (choice === 'save') return saveTrackFile(i);
+  if (choice !== 'delete' || state.tracks[i] !== buf) return;
+  if (state.phase === 'playing') stopPlayback();
+  if (undo && undo.index === i) clearUndo();
+  state.tracks[i] = null;
+  saveTrack(i, null);
+  renderAll();
+  setStatus(`Track ${i + 1} deleted.`);
+}
 
 /* ---------------- saving ---------------- */
 
 // Save the selected track as a WAV (the reversed audio, as you hear it).
-els.btnSave.addEventListener('click', async () => {
-  const buf = state.tracks[state.active];
+els.btnSave.addEventListener('click', () => saveTrackFile(state.active));
+
+async function saveTrackFile(index) {
+  const buf = state.tracks[index];
   if (!buf) return;
-  const name = `There and Back - track ${state.active + 1} - ${stamp()}.wav`;
+  const name = `There and Back - track ${index + 1} - ${stamp()}.wav`;
   const file = new File([wavFromBuffer(buf)], name, { type: 'audio/wav' });
   const how = await saveFiles([file]);
   if (how !== 'cancelled') setStatus(how === 'shared' ? 'Shared.' : `Downloaded ${name}`);
-});
+}
 
 // Bring back the takes kept on this device from last time.
 async function restoreTracks() {

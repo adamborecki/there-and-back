@@ -20,7 +20,8 @@ Runs entirely in the browser (iOS Safari included). No backend, no uploads.
 | Keyboard | hold Space | Space toggles |
 
 - **Tracks 1–3**: pick a track, then record into it; all filled tracks play
-  together. The × clears a track.
+  together. Recording over a take replaces it, with an **Undo** button for
+  12 seconds. The × deletes a track after asking (with "Save it first").
 - **Loop** (left button) repeats playback.
 - **Save** (on the waveform) exports the selected track as a WAV, through the
   share sheet on iPhone (Save to Files, AirDrop, Messages…) or as a download.
@@ -85,7 +86,8 @@ src/styles.css           light/dark theme, mobile-first
 - [ ] Quick tap replays; quick tap while playing stops
 - [ ] Long-press doesn't select text or open a callout
 - [ ] Tap on / off mode works; ▶ replays
-- [ ] Three tracks layer; × clears one
+- [ ] Three tracks layer; × asks before deleting
+- [ ] Recording over a take shows Undo; Undo brings the old take back
 - [ ] Loop repeats until stopped
 - [ ] Save opens the share sheet on iPhone; the WAV plays back reversed
 - [ ] Reload: takes come back; × then reload: that take stays gone
