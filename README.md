@@ -6,8 +6,7 @@ back reversed straight away. Layer up to three reversed takes.
 
 Live: <https://adamborecki.github.io/there-and-back/>
 
-Runs entirely in the browser (iOS Safari included). No backend, no uploads;
-takes live in memory and vanish on reload.
+Runs entirely in the browser (iOS Safari included). No backend, no uploads.
 
 ---
 
@@ -23,6 +22,11 @@ takes live in memory and vanish on reload.
 - **Tracks 1–3**: pick a track, then record into it; all filled tracks play
   together. The × clears a track.
 - **Loop** (left button) repeats playback.
+- **Save** (on the waveform) exports the selected track as a WAV, through the
+  share sheet on iPhone (Save to Files, AirDrop, Messages…) or as a download.
+- **Takes are kept on this device** (IndexedDB) and come back after a reload.
+  iOS Safari can clear a site's storage after ~7 days without a visit, so use
+  Save for anything you want to keep.
 - **Settings**: record-button mode, volume (up to 300%), auto-maximize,
   speed, fade in / out, microphone, and output device (Chrome only).
 
@@ -69,6 +73,8 @@ index.html               markup
 src/app.js               UI, record-button logic, waveform, settings
 src/audio.js             AudioContext, mic, capture, maximize, reverse, playback
 src/capture-worklet.js   AudioWorklet that streams raw mic samples
+src/store.js             keeps the tracks on this device (IndexedDB)
+src/wav.js               WAV encoding + share / download
 src/styles.css           light/dark theme, mobile-first
 ```
 
@@ -81,4 +87,6 @@ src/styles.css           light/dark theme, mobile-first
 - [ ] Tap on / off mode works; ▶ replays
 - [ ] Three tracks layer; × clears one
 - [ ] Loop repeats until stopped
+- [ ] Save opens the share sheet on iPhone; the WAV plays back reversed
+- [ ] Reload: takes come back; × then reload: that take stays gone
 - [ ] Backgrounding mid-take stops cleanly; returning still works

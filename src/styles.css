@@ -99,6 +99,15 @@ button { font-family: inherit; color: inherit; }
   position: absolute; top: 5px; left: 9px; pointer-events: none;
   font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em;
 }
+.wave-save {
+  position: absolute; top: 5px; right: 6px;
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  font-size: 0.72rem; font-weight: 600;
+}
+.wave-save svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.wave-save:disabled { display: none; }
 .playhead {
   position: absolute; top: 0; bottom: 0; left: 0; width: 2px; display: none;
   background: var(--playhead); box-shadow: 0 0 8px var(--playhead); pointer-events: none;

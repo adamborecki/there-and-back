@@ -14,6 +14,8 @@
    =========================================================== */
 
 import { AudioEngine } from './audio.js';
+import { saveTrack, loadTracks } from './store.js';
+import { wavFromBuffer, saveFiles, stamp } from './wav.js';
 
 const TAP_SECONDS = 0.3;     // a hold shorter than this counts as a tap
 const MAX_SECONDS = 120;     // recording auto-stops here
@@ -29,7 +31,7 @@ const els = {
   waveLabel: $('waveLabel'), playhead: $('playhead'),
   btnRecord: $('btnRecord'), btnIcon: $('btnIcon'), btnLabel: $('btnLabel'),
   btnLoop: $('btnLoop'), btnReplay: $('btnReplay'), replayIcon: $('replayIcon'),
-  status: $('status'), infoRow: $('infoRow'),
+  status: $('status'), infoRow: $('infoRow'), btnSave: $('btnSave'),
   settingsToggle: $('settingsToggle'), settingsBody: $('settingsBody'),
   volume: $('volume'), volumeVal: $('volumeVal'), maximize: $('maximize'),
   rate: $('rate'), rateVal: $('rateVal'),
@@ -207,6 +209,7 @@ async function finishRecording() {
   }
   const { buffer, gain } = audio.makeReversed(samples, { maximize: els.maximize.checked });
   state.tracks[state.active] = buffer;
+  saveTrack(state.active, buffer); // keep it across reloads
   const dB = 20 * Math.log10(gain);
   setStatus(`Recorded ${buffer.duration.toFixed(1)}s${gain > 1.01 ? ` · boosted +${dB.toFixed(0)} dB` : ''}`);
   playAll();
@@ -268,12 +271,45 @@ els.pills.forEach((pill, i) => {
     if (state.phase === 'recording' || state.phase === 'processing') return;
     if (e.target.classList.contains('clear-x')) {
       state.tracks[i] = null;
+      saveTrack(i, null);
       if (state.phase === 'playing') stopPlayback();
     }
     state.active = i;
     renderAll();
   });
 });
+
+/* ---------------- saving ---------------- */
+
+// Save the selected track as a WAV (the reversed audio, as you hear it).
+els.btnSave.addEventListener('click', async () => {
+  const buf = state.tracks[state.active];
+  if (!buf) return;
+  const name = `There and Back - track ${state.active + 1} - ${stamp()}.wav`;
+  const file = new File([wavFromBuffer(buf)], name, { type: 'audio/wav' });
+  const how = await saveFiles([file]);
+  if (how !== 'cancelled') setStatus(how === 'shared' ? 'Shared.' : `Downloaded ${name}`);
+});
+
+// Bring back the takes kept on this device from last time.
+async function restoreTracks() {
+  const saved = await loadTracks(TRACKS);
+  let n = 0;
+  saved.forEach((rec, i) => {
+    if (!rec || state.tracks[i]) return;
+    try {
+      const buf = new AudioBuffer({ length: rec.data.length, sampleRate: rec.sampleRate, numberOfChannels: 1 });
+      buf.copyToChannel(rec.data, 0);
+      state.tracks[i] = buf;
+      n += 1;
+    } catch (err) { console.warn('Could not restore track', i + 1, err); }
+  });
+  if (n) {
+    renderAll();
+    setStatus(`Restored ${n} take${n === 1 ? '' : 's'} from last time`);
+    if (!state.ready) els.gateText.textContent = `Your ${n === 1 ? 'take from last time is' : `${n} takes from last time are`} still here. Hold the button to record more.`;
+  }
+}
 
 /* ---------------- timers ---------------- */
 
@@ -322,6 +358,7 @@ function renderAll() {
   els.btnReplay.disabled = !canReplay;
   els.replayIcon.querySelector('path').setAttribute('d', p === 'playing' ? PATH_STOP : PATH_PLAY);
   els.btnReplay.setAttribute('aria-label', p === 'playing' ? 'Stop' : 'Replay');
+  els.btnSave.disabled = !state.tracks[state.active] || p === 'recording' || p === 'processing';
 
   els.pills.forEach((pill, i) => {
     pill.classList.toggle('selected', i === state.active);
@@ -544,6 +581,7 @@ function loadSettings() {
 
 loadSettings();
 renderAll();
+restoreTracks();
 
 // Console debugging.
 window.thereAndBack = { audio, state };
